@@ -3,9 +3,8 @@ import { getVideo, updateVideo } from "../db/videos";
 import type { ApiConfig } from "../config";
 import type { BunRequest } from "bun";
 import { BadRequestError, NotFoundError, UserForbiddenError } from "./errors";
-// import { getInMemoryURL } from "./assets";
 import { respondWithJSON } from "./json";
-import path from "path";
+import { getAssetDiskPath, getAssetURL, mediaTypeToExt } from "./assets";
 
 export async function handlerUploadThumbnail(cfg: ApiConfig, req: BunRequest) {
   const { videoId } = req.params as { videoId?: string };
@@ -42,6 +41,10 @@ export async function handlerUploadThumbnail(cfg: ApiConfig, req: BunRequest) {
   const mediaType = file.type;
   if (!mediaType) {
     throw new BadRequestError("Missing Content-Type for thumbnail");
+  }
+
+  if (mediaType !== "image/png" && mediaType !== "image/png") {
+    throw new BadRequestError("Unsupported media type");
   }
 
   const ext = mediaTypeToExt(mediaType);
