@@ -4,7 +4,12 @@ import type { ApiConfig } from "../config";
 import type { BunRequest } from "bun";
 import { BadRequestError, NotFoundError, UserForbiddenError } from "./errors";
 import { respondWithJSON } from "./json";
-import { getAssetDiskPath, getAssetURL, mediaTypeToExt } from "./assets";
+import {
+  getAssetDiskPath,
+  getAssetPath,
+  getAssetURL,
+  mediaTypeToExt,
+} from "./assets";
 
 export async function handlerUploadThumbnail(cfg: ApiConfig, req: BunRequest) {
   const { videoId } = req.params as { videoId?: string };
@@ -47,15 +52,13 @@ export async function handlerUploadThumbnail(cfg: ApiConfig, req: BunRequest) {
     throw new BadRequestError("Unsupported media type");
   }
 
-  const ext = mediaTypeToExt(mediaType);
-  const filename = `${videoId}${ext}`;
+  const assetPath = getAssetPath(mediaType);
+  const assetDiskPath = getAssetDiskPath(cfg, assetPath);
 
-  const assetDiskPath = getAssetDiskPath(cfg, filename);
   await Bun.write(assetDiskPath, file);
 
-  const urlPath = getAssetURL(cfg, filename);
+  const urlPath = getAssetURL(cfg, assetPath);
   video.thumbnailURL = urlPath;
-
   updateVideo(cfg.db, video);
 
   return respondWithJSON(200, video);
